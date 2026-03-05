@@ -1,3 +1,8 @@
+from fileinput import filename
+from pathlib import Path
+import glob
+import os
+
 from dominate.tags import figure, div, section, h2
 from dominate.util import raw
 import locale
@@ -221,18 +226,39 @@ def div_summary(titles):
     return html
 
 
-def add_qc(args, tables):
-    figs = sort_figures(args)
+def add_qc(plots_dir, tables):
+
+    plots_dir = Path(*plots_dir)
+
+    # Find all HTML files directly inside plots_dir
+    html_files = sorted(glob.glob(str(plots_dir / "*.html")))
+
+    if not html_files:
+        raise FileNotFoundError(f"No .html files found in: {plots_dir}")
+
+    figs = sort_figures(html_files)  # Reuse your existing sorting logic
+
     titles = [v[1] for v in figs.values()]
+
+    # Layout identical to your original function
     with div(style="display: flex"):
         with div(style="flex: 1"):
             raw(div_summary(titles))
+
         with div(style="flex: 4; overflow: auto"):
-            for i,f in enumerate(figs.values()):
-                with open(f[0], 'r', encoding="UTF-8") as html:
+            for i, f in enumerate(figs.values()):
+                # f[0] = html file, f[1] = title
+                html_file = f[0]
+                title = f[1]
+
+                # Read HTML file
+                with open(html_file, 'r', encoding="UTF-8") as html:
                     html_contents = html.read()
+
                 with figure(style="float: right"):
-                    with section(id=str('M'+str(i))):
+                    with section(id=f"M{i}"):
                         raw(html_contents)
-                        if f[1] in tables:
-                            raw(tables[f[1]])
+
+                        # Insert associated table (unchanged)
+                        if title in tables:
+                            raw(tables[title])
