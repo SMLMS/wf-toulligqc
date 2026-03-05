@@ -47,7 +47,7 @@ process makeReport {
         path "versions/*"
         path "params.json"
     output:
-        path "wf-template-*.html"
+        path "wf-toulligqc-*.html"
     script:
         String report_name = "wf-toulligqc-report.html"
     """
