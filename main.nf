@@ -42,20 +42,20 @@ process getParams {
 process makeReport {
     label "wfqc"
     input:
-        val plots_html
+        path plots_dir
         path "QC-repport/report.data"
         path "versions/*"
         path "params.json"
     output:
         path "wf-template-*.html"
     script:
-        String report_name = "wf-template-report.html"
+        String report_name = "wf-toulligqc-report.html"
     """
     workflow-glue report $report_name \
         --versions versions \
         --params params.json \
         --metadata QC-repport/report.data \
-        --qc ${plots_html.join()}
+        --qc ${plots_dir}
     """
 }
 
@@ -77,6 +77,7 @@ process toulligqc {
         path "$report_name/report.data", emit: report_data
         path "$report_name/images/*.html", emit: plots_html
         path "$report_name/images/plotly.min.js", emit: plotly_js
+        path "$report_name/images", emit: plots_dir
     script:
         def seq_summary_arg = seq_summary.name != 'no_seq_summary' ? "--sequencing-summary-source $seq_summary" : ""
         def summary_pass_arg = summary_pass.name != 'no_barcoding_pass' ? "--sequencing-summary-source $summary_pass" : ""
@@ -134,10 +135,10 @@ workflow pipeline {
 
         plotly_js = toulligqc.out.plotly_js
 
-        plots_html = toulligqc.out.plots_html.toList()
+        plots_dir = toulligqc.out.plots_dir
 
         report = makeReport(
-            plots_html, toulligqc.out.report_data, software_versions.collect(), workflow_params
+            plots_dir, toulligqc.out.report_data, software_versions.collect(), workflow_params
         )
     emit:
         plotly_js
